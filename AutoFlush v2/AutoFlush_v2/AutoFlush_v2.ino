@@ -23,6 +23,12 @@
  * 
  */
 
+#include <Arduino.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+#include <ESP8266HTTPClient.h>
+#include <TimeLib.h>
+
 #include <SharpIR.h>
 #include <Servo.h> 
 #include <U8g2lib.h>
@@ -37,17 +43,15 @@ int normalAngle = 0;  //might need to experiment with this one
 int flushAngle = 70;  //might need to experiment with this one
 
 //Configuration parameters
-String ssidName = "";   //WiFi SSID
-String password = "";   //WiFi password
+String ssidName = "DLwireless";   //Required for time sync
+String password = "22342234";   //Required for time sync
 int8_t cmDistance = 80;    //Distance of detection in centimeters (X cm or closer to activate)
 int8_t minDetectTime = 2;  //X seconds you need to stand there at least to activate
 int8_t flushDuration = 5;  //Hold the toilet for X seconds
 int8_t refillDuration = 25; //Wait at least X seconds after flush for toilet to refill
 
 //Screen variables
-String topMsg = ""; //top message - could be time, session
-String mainMsg = "";  //button message - could be Active, Flushing, etc
-bool flashing = false;  //whether the button message should flash
+String timeNow = ""; //top message - could be time, session
 int8_t perc = 0;
 int8_t flushSec = 0;  //this gets incremented every second of flush
 String sessionTime = ""; //for storing session time
@@ -70,6 +74,7 @@ SharpIR SharpIR(ir, model);
 Servo myservo; 
 //U8G2 Contructor
 U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ 16, /* clock=*/ 5, /* data=*/ 4);
+ESP8266WiFiMulti WiFiMulti; //WiFi client needed to get time
 
 //Declare function prototypes
 void flushToilet();
@@ -78,10 +83,30 @@ void getTimeFromMillis(long val);
 void progBarTime(U8G2 u8g2, uint8_t x, uint8_t y, uint8_t width, uint8_t height, uint8_t percent, String msg);
 void button(U8G2 u8g2, uint8_t x, uint8_t y, uint8_t width, String str, bool clicked);
 
+//Function prototypes for just getting the time
+void setTimeUsingWIFI();
+void digitalClockDisplay();
+String printDigits(int digits);
+
 void setup() 
 {
   Serial.begin(115200);
   u8g2.begin();
+
+  for(uint8_t t = 4; t > 0; t--) {
+      Serial.printf("[SETUP] WAIT %d...\n", t);
+      Serial.flush();
+      delay(1000);
+  }
+
+  WiFi.mode(WIFI_STA);
+  WiFiMulti.addAP(ssidName.c_str(), password.c_str());
+
+  setTimeUsingWIFI();
+  if(timeStatus()!= timeSet) 
+     Serial.println("Unable to sync time with the server");
+  else
+     Serial.println("Server has set the system time");  
   
 }  //end setup
 
@@ -217,7 +242,8 @@ void drawScreen(int8_t stage)
         u8g2.firstPage();
         do {
           u8g2.setDrawColor(1);
-          progBarTime(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 15, perc, "10:31 PM"); //show prog bar
+          digitalClockDisplay();  //gets timeNow
+          progBarTime(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 15, perc, timeNow); //show prog bar
           perc++; //imcrement percent
           int delayPerPercent = minDetectTime * 8;  //gets ms for each percent delay
           delay(delayPerPercent);
@@ -284,4 +310,55 @@ void button(U8G2 u8g2, uint8_t x, uint8_t y, uint8_t width, String str, bool cli
         u8g2.setFont(u8g2_font_profont15_mr);
         u8g2.drawStr((width/2) - (charWidth * str.length() / 2), getMaxCharHeight + y + 7, (String(str)).c_str());
     }
+}
+
+void setTimeUsingWIFI()
+{
+  //This sets the time using Makitronics web server. Any server that provides unix timestamp will do.
+  //This is easier to use than NTP time examples and does not require you to specify the timezone.
+  
+  if((WiFiMulti.run() == WL_CONNECTED)) { // wait for WiFi connection
+
+      HTTPClient http;
+
+      // configure traged server and url
+      http.begin("http://aws.makitronics.com/iot/projects/autoflush/index.php"); //HTTP
+      int httpCode = http.GET();  // start connection and send HTTP header
+      if(httpCode > 0) {  // httpCode will be negative on error
+          // HTTP header has been send and Server response header has been handled
+          
+          // file found at server
+          if(httpCode == HTTP_CODE_OK) {
+              String payload = http.getString();
+              //time for some parsing
+              setTime(payload.toInt()); //now finally set the time
+          }
+      } else {
+          Serial.println("GET failed");
+      }
+
+      http.end();
+  }
+}
+
+void digitalClockDisplay()
+{
+  // digital clock display of the time
+  timeNow = printDigits(hourFormat12()) + ":" + printDigits(minute());
+  if (isAM()) {
+    timeNow.concat(" AM");
+  } else {
+    timeNow.concat(" PM");
+  }
+  Serial.println(timeNow); 
+}
+
+String printDigits(int digits)
+{
+  // utility function for digital clock display: returns leading 0 if needed
+  String result = "";
+  if (digits < 10)
+    result = "0";
+  result.concat(String(digits));
+  return result;
 }
