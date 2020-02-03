@@ -40,9 +40,9 @@ int flushAngle = 70;  //might need to experiment with this one
 String ssidName = "";   //WiFi SSID
 String password = "";   //WiFi password
 int8_t cmDistance = 80;    //Distance of detection in centimeters (X cm or closer to activate)
-int8_t minDetectTime = 3;  //X seconds you need to stand there to activate
+int8_t minDetectTime = 2;  //X seconds you need to stand there at least to activate
 int8_t flushDuration = 5;  //Hold the toilet for X seconds
-int8_t refillDuration = 25; //Wait X seconds after flush for toilet to refill
+int8_t refillDuration = 25; //Wait at least X seconds after flush for toilet to refill
 
 //Screen variables
 String topMsg = ""; //top message - could be time, session
@@ -219,7 +219,7 @@ void drawScreen(int8_t stage)
           u8g2.setDrawColor(1);
           progBarTime(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 15, perc, "10:31 PM"); //show prog bar
           perc++; //imcrement percent
-          int8_t delayPerPercent = minDetectTime * 10;  //gets ms for each percent delay
+          int delayPerPercent = minDetectTime * 8;  //gets ms for each percent delay
           delay(delayPerPercent);
         } while ( u8g2.nextPage() );
       }
@@ -257,7 +257,7 @@ void drawScreen(int8_t stage)
           u8g2.setDrawColor(1);
           progBarTime(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 15, perc, "Refilling..."); //show prog bar
           perc++; //imcrement percent
-          int delayPerPercent = (refillDuration - 2) * 10;  //gets ms for each percent delay
+          int delayPerPercent = (refillDuration - 2) * 8;  //gets ms for each percent delay
           delay(delayPerPercent);
         } while ( u8g2.nextPage() );
       }
