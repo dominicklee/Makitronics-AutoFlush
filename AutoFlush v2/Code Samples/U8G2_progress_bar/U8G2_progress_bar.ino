@@ -15,11 +15,13 @@ void progressBar(U8G2 u8g2, uint8_t x, uint8_t y, uint8_t width, uint8_t height,
 
     // draw percentage
     u8g2.setFont(u8g2_font_6x10_tr);
-    u8g2.drawStr(x + width / 2 - 5 * 1, y - 1, (String(percent) + String("%")).c_str());
+    //u8g2.drawStr(x + width / 2 - 5 * 1, y - 1, (String(percent) + String("%")).c_str());  //display percent
+    //String msg = "10:31 PM";
+    u8g2.drawStr((width / 2) - (msg.length() * 5 / 2), y - 1, msg.c_str());
 
     // draw it
-    u8g2.drawRFrame(x, y, width, height, 4);
-    u8g2.drawBox(x + 2, y + 2, (width - 4) * (percent / 100.0), height - 4);
+    u8g2.drawRFrame(x, y + 3, width, height, 4);
+    u8g2.drawBox(x + 2, y + 5, (width - 4) * (percent / 100.0), height - 4);
 }
 
 void draw()
@@ -28,7 +30,7 @@ void draw()
   do {
     u8g2.setDrawColor(1);
 
-    progressBar(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 18, counter);
+    progressBar(u8g2, 2, 12, u8g2.getDisplayWidth() - 5, 15, counter);
 
   } while ( u8g2.nextPage() );
 }
