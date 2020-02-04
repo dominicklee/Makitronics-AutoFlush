@@ -7,7 +7,7 @@
  * Configuration parameters:
  * WiFi SSID/password
  * Distance of detection (in CM)
- * Minimum dection time (in seconds)
+ * Minimum detection time (in seconds)
  * Flush duration (in seconds)
  * Tank refill duration (in seconds)
  * 
@@ -93,6 +93,7 @@ void setup()
   Serial.begin(115200);
   u8g2.begin();
 
+  drawScreen(5);
   for(uint8_t t = 4; t > 0; t--) {
       Serial.printf("[SETUP] WAIT %d...\n", t);
       Serial.flush();
@@ -100,8 +101,8 @@ void setup()
   }
 
   WiFi.mode(WIFI_STA);
+  WiFi.hostname("AutoFlush");
   WiFiMulti.addAP(ssidName.c_str(), password.c_str());
-
   setTimeUsingWIFI();
   if(timeStatus()!= timeSet) 
      Serial.println("Unable to sync time with the server");
@@ -212,7 +213,7 @@ void progBarTime(U8G2 u8g2, uint8_t x, uint8_t y, uint8_t width, uint8_t height,
     width = width < 10 ? 10 : width;
 
     // draw percentage
-    u8g2.setFont(u8g2_font_6x10_tr);
+    u8g2.setFont(u8g2_font_profont12_tr);
     //u8g2.drawStr(x + width / 2 - 5 * 1, y - 1, (String(percent) + String("%")).c_str());  //display percent
     //String msg = "10:31 PM";
     u8g2.drawStr((width / 2) - (msg.length() * 5 / 2), y - 1, msg.c_str());
@@ -233,6 +234,7 @@ void drawScreen(int8_t stage)
      *    2 - Flashing flushing button (flash for flushDuration)
      *    3 - Session end time button (for 2.5 seconds)
      *    4 - Refilling w/ prog. bar go up (for refillDuration)
+     *    5 - Power up screen
      */
 
     if (stage == 0) //Time w/ prog
@@ -288,6 +290,16 @@ void drawScreen(int8_t stage)
         } while ( u8g2.nextPage() );
       }
     }
+    else if (stage == 5) //Power up screen
+    {
+      u8g2.firstPage();
+      do {
+        u8g2.setDrawColor(1);
+        u8g2.setFont(u8g2_font_profont17_tr);
+        u8g2.drawStr(18,12, "Makitronics");
+        u8g2.drawStr(24,27, "AutoFlush");
+      } while ( u8g2.nextPage() );
+    }
     else {  
       //do nothing
     }
@@ -338,6 +350,28 @@ void setTimeUsingWIFI()
       }
 
       http.end();
+  }
+  else {
+    Serial.println("WiFi not connected");
+    if (WiFiMulti.status() == WL_IDLE_STATUS) { // when not connected to a network, but powered on 
+      Serial.println("WL_IDLE_STATUS");
+    }
+    else if (WiFiMulti.status() == WL_NO_SSID_AVAIL) {
+      Serial.println("WL_NO_SSID_AVAIL");
+    }
+    else if (WiFiMulti.status() == WL_CONNECT_FAILED) {
+      Serial.println("WL_CONNECT_FAILED");
+    }
+    else if (WiFiMulti.status() == WL_CONNECTION_LOST) {
+      Serial.println("WL_CONNECTION_LOST");
+    }
+    else if (WiFiMulti.status() == WL_DISCONNECTED) {
+      Serial.println("WL_DISCONNECTED");
+    }
+    else {
+      Serial.print("unknown status: ");
+      Serial.println(WiFiMulti.status());
+    }
   }
 }
 
