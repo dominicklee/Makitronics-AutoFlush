@@ -197,4 +197,24 @@ void loop() {
       wifiManager.resetSettings();
     }
   }
+
+  if (millis() % 2000 == 0) { //print every 2 seconds
+    int cmDistance, minDetectTime, flushDuration, refillDuration, normalAngle, flushAngle;
+    
+    cmDistance = atoi(distance_detection);
+    minDetectTime = atoi(min_detect_duration);
+    flushDuration = atoi(flush_duration);
+    refillDuration = atoi(refill_duration);
+    normalAngle = atoi(normal_angle);
+    flushAngle = atoi(flush_angle);
+
+    Serial.println(cmDistance);
+    Serial.println(minDetectTime);
+    Serial.println(flushDuration);
+    Serial.println(refillDuration);
+    Serial.println(normalAngle);
+    Serial.println(flushAngle);
+    Serial.println();
+  }
+
 }
