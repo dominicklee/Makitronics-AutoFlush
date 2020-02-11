@@ -364,8 +364,8 @@ void setTimeUsingWIFI()
 
       HTTPClient http;
 
-      // configure traged server and url
-      http.begin("http://aws.makitronics.com/iot/projects/autoflush/index.php"); //HTTP
+      // configure timestamp server and url
+      http.begin("http://35.160.228.31/iot/projects/autoflush/"); //HTTP Makitronics time server
       int httpCode = http.GET();  // start connection and send HTTP header
       if(httpCode > 0) {  // httpCode will be negative on error
           // HTTP header has been send and Server response header has been handled
@@ -377,7 +377,8 @@ void setTimeUsingWIFI()
               setTime(payload.toInt()); //now finally set the time
           }
       } else {
-          Serial.println("GET failed");
+          Serial.print("GET failed with code ");
+          Serial.println(httpCode);
       }
 
       http.end();
@@ -501,12 +502,12 @@ void runWiFiLoadSettings()
   // The extra parameters to be configured (can be either global or just in the setup)
   // After connecting, parameter.getValue() will get you the configured value
   // id/name placeholder/prompt default length
-  WiFiManagerParameter custom_distance_detection("distance_detection", "Distance Detection (cm)", distance_detection, 3);
-  WiFiManagerParameter custom_min_detect_duration("min_detect_duration", "Min Detect Duration (sec)", min_detect_duration, 3);
-  WiFiManagerParameter custom_flush_duration("flush_duration", "Flush Duration (sec)", flush_duration, 3);
-  WiFiManagerParameter custom_refill_duration("refill_duration", "Refill Duration (sec)", refill_duration, 3);
-  WiFiManagerParameter custom_normal_angle("normal_angle", "Normal Angle (deg)", normal_angle, 3);
-  WiFiManagerParameter custom_flush_angle("flush_angle", "Flush Angle (deg)", flush_angle, 3);
+  WiFiManagerParameter custom_distance_detection("distance_detection", "Distance Detection (cm)", distance_detection, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
+  WiFiManagerParameter custom_min_detect_duration("min_detect_duration", "Min Detect Duration (sec)", min_detect_duration, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
+  WiFiManagerParameter custom_flush_duration("flush_duration", "Flush Duration (sec)", flush_duration, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
+  WiFiManagerParameter custom_refill_duration("refill_duration", "Refill Duration (sec)", refill_duration, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
+  WiFiManagerParameter custom_normal_angle("normal_angle", "Normal Angle (deg)", normal_angle, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
+  WiFiManagerParameter custom_flush_angle("flush_angle", "Flush Angle (deg)", flush_angle, 3, "pattern='[0-9]{1,3}' title='Value must be an integer'");
 
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
